@@ -5,9 +5,11 @@ import java.util.Scanner;
 
 import com.example.passwordManager.Model.Entry;
 import com.example.passwordManager.Service.VaultService;
+import com.example.passwordManager.Utils.InputUtils;
 
 public class VaultController {
 
+    private String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
     private final Scanner scanner = new Scanner(System.in);
     private final VaultService vaultService = new VaultService();
 
@@ -30,11 +32,15 @@ public class VaultController {
             System.out.println("backup - Backup Vault");
             System.out.println("restore - Restore Vault from Backup");
             System.out.print("exit - Exit\n> ");
+            System.out.println("---------------------------------------------------------");
             String choice = scanner.nextLine();
-            switch (choice) {
+            String[] parts = choice.split("\\s+", 2);
+            String command = parts[0];
+            String args = parts.length > 1 ? parts[1] : "";
+            switch (command) {
                 case "add" -> addEntry();
                 case "list" -> viewEntries();
-                case "show" -> viewEntryById();
+                case "show" -> viewEntryById(args);
                 case "exit" -> {
                     saveEntries();
                     running = false;
@@ -66,7 +72,6 @@ public class VaultController {
 
     private void viewEntries() {
         List<Entry> entries= vaultService.getAllEntries();
-        String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
         System.out.printf(formatString, "ID", "Service name", "Login", "Password", "URL", "Notes");
         for (var en : entries){
             System.out.printf(formatString,
@@ -80,9 +85,25 @@ public class VaultController {
         }
     }
 
-    private void viewEntryById() {
-        System.out.println("Viewing entry by ID...");
-        // Implementation for viewing an entry by ID
+    private void viewEntryById(String args) {
+        Integer id = InputUtils.parseIntOrNull(args);
+        if (id == null){
+            System.out.println("Id is not a number");
+            return;
+        }
+        Entry entry = vaultService.getEntryById(id);
+        if (entry == null){
+            System.out.println("An Entry with this id was not found");
+        } else {
+            System.out.printf(formatString,
+                entry.getId(),
+                entry.getServiceName(),
+                entry.getUsername(),
+                entry.getPassword(),
+                entry.getUrl(),
+                entry.getNotes()
+            );
+        }
     }
 
     private void saveEntries() {

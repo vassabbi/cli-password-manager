@@ -68,4 +68,12 @@ public class VaultService {
     public List<Entry> getAllEntries() {
         return vault.getEntries();
     }
+
+    public Entry getEntryById(int id){
+        return vault.getEntries()
+                    .stream()
+                    .filter(en -> en.getId() == id)
+                    .findFirst()
+                    .orElse(null);
+    }
 }
