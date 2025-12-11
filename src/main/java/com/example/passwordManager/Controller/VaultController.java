@@ -56,8 +56,11 @@ public class VaultController {
         String notes = scanner.nextLine();
         System.out.println("Enter URL (optional):");
         String url = scanner.nextLine();
-        vaultService.addEntry(serviceName, username, password, notes, url);
-        System.out.println("Adding entry...");
+        if (vaultService.addEntry(serviceName, username, password, notes, url)){
+            System.out.println("Entry added");
+        } else {
+            System.out.println("Duplicated service name and username");
+        }
         // Implementation for adding an entry
     }
 

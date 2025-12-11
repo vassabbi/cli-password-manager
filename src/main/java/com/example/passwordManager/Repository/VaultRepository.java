@@ -21,9 +21,9 @@ public class VaultRepository {
     }
     
     public byte[] load(String userName){
-        String path = "data/" + userName + ".vault";
+        Path filePath = dataDir.resolve(userName + ".vault");
         try{
-            byte[] data = Files.readAllBytes(Paths.get(path));
+            byte[] data = Files.readAllBytes(filePath);
             return data;
         } catch (IOException e){
             return null;
@@ -31,9 +31,9 @@ public class VaultRepository {
     }
 
     public boolean save(String userName, byte[] data){
-        String path = "data/" + userName + ".vault";
+        Path filePath = dataDir.resolve(userName + ".vault");
         try{
-            Files.write(Paths.get(path), data);
+            Files.write(filePath, data);
             return true;
         } catch (IOException e){
             System.out.println("Failed to write to file");

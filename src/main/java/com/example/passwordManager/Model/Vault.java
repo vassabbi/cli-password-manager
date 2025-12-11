@@ -3,7 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Vault {
-    private List<Entry> entries = new ArrayList<Entry>();
+    private List<Entry> entries = new ArrayList<>();
 
     public List<Entry> getEntries() {
         return entries;

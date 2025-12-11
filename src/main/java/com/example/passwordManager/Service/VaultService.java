@@ -18,43 +18,54 @@ public class VaultService {
         this.loadVault();
     }
 
-    public void saveVault(){
+    public void saveVault() {
         String jsonVault = gson.toJson(vault);
         byte[] data = jsonVault.getBytes();
         repo.save(userName, data);
     }
 
-    private void loadVault(){
+    private void loadVault() {
         byte[] data = repo.load(userName);
-        if (data != null){
+        if (data != null) {
             String jsonVault = new String(data);
             this.vault = gson.fromJson(jsonVault, Vault.class);
+            if (this.vault == null) {
+                this.vault = new Vault();
+            }
         } else {
             vault = new Vault();
         }
     }
 
-    private int getNextId(){
+    private int getNextId() {
         return vault.getEntries()
-                    .stream()
-                    .mapToInt(Entry::getId)
-                    .max()
-                    .orElse(0) + 1;
+                .stream()
+                .mapToInt(Entry::getId)
+                .max()
+                .orElse(0) + 1;
     }
 
-    public void addEntry(String serviceName, String username, String password, String notes, String url) {
+    public boolean addEntry(String serviceName, String username, String password, String notes, String url) {
         Entry entry = new Entry(
-            this.getNextId(), 
-            serviceName, 
-            username, 
-            password, 
-            notes, 
-            url
+                this.getNextId(),
+                serviceName,
+                username,
+                password,
+                notes,
+                url
         );
+        if (this.vault.getEntries()
+                .stream()
+                .filter(en -> (en.getServiceName().equals(serviceName)) && en.getUsername().equals(username))
+                .count() > 0) {
+            return false;
+        }
+
         this.vault.addEntry(entry);
+        return true;
     }
 
-    public List<Entry> getAllEntries(){
+    public List<Entry> getAllEntries() {
         return vault.getEntries();
     }
 }
