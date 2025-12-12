@@ -1,6 +1,11 @@
 package com.example.passwordManager.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import com.example.passwordManager.Model.Entry;
 import com.example.passwordManager.Model.Vault;
@@ -13,9 +18,46 @@ public class VaultService {
     private Vault vault;
     private final String userName = "Sasha";
     Gson gson = new Gson();
+    private final Map<String, BiConsumer<Entry, String>> fieldSetters = new LinkedHashMap<>();
+    private final Map<String, Function<Entry, String>> fieldGetters = new LinkedHashMap<>();
 
     public VaultService() {
         this.loadVault();
+
+        fieldSetters.put("Service Name", Entry::setServiceName);
+        fieldSetters.put("Username", Entry::setUsername);
+        fieldSetters.put("Password", Entry::setPassword);
+        fieldSetters.put("Notes", Entry::setNotes);
+        fieldSetters.put("URL", Entry::setUrl);
+
+        fieldGetters.put("Service Name", Entry::getServiceName);
+        fieldGetters.put("Username", Entry::getUsername);
+        fieldGetters.put("Password", Entry::getPassword);
+        fieldGetters.put("Notes", Entry::getNotes);
+        fieldGetters.put("URL", Entry::getUrl);
+    }
+
+    public String getField(Entry entry, String fieldName){
+        Function<Entry, String> getter = fieldGetters.get(fieldName);
+        if (getter != null){
+            return getter.apply(entry);
+        } else {
+            return "";
+        }
+    }
+
+    public Set<String> getEditableFieldNames(){
+        return fieldGetters.keySet();
+    }
+
+    public boolean updateField(Entry entry, String fieldName, String value){
+        BiConsumer<Entry, String> setter = fieldSetters.get(fieldName);
+        if (setter == null) {
+            return false;
+        } else {
+            setter.accept(entry, value);
+            return true;
+        }
     }
 
     public void saveVault() {

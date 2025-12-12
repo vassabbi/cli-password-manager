@@ -65,11 +65,15 @@ public class VaultController {
                 case "show" -> viewEntryById(args);
                 case "search" -> searchByKeyword(args);
                 case "remove" -> removeById(args);
+                case "update" -> updateById(args);
                 case "exit" -> {
-                    saveEntries();
-                    running = false;
+                    try (scanner) {
+                        saveEntries();
+                        running = false;
+                    }
                     System.out.println("Exiting Password Manager CLI. Goodbye!");
                 }
+
                 default -> System.out.println("Invalid option. Please try again.");
             }
         }
@@ -99,6 +103,7 @@ public class VaultController {
     }
 
     private void viewEntryById(String args) {
+        args = args.trim();
         Integer id = InputUtils.parseIntOrNull(args);
         if (id == null){
             System.out.println("Id is not a number");
@@ -113,10 +118,7 @@ public class VaultController {
     }
 
     private void searchByKeyword(String args) {
-        if (args == null){
-            System.out.println("The keyword was not found");
-            return;
-        }
+        args = args.trim();
         if (args.length() < 2){
             System.out.println("Keyword must be at least 2 characters");
             return;
@@ -130,6 +132,7 @@ public class VaultController {
     }
 
     private void removeById(String args){
+        args = args.trim();
         Integer id = InputUtils.parseIntOrNull(args);
         if (id == null){
             System.out.println("Id is not a number");
@@ -141,5 +144,29 @@ public class VaultController {
         } else {
             System.out.println("An entry was removed");
         }
+    }
+
+    private void updateById(String args){
+        args = args.trim();
+        Integer id = InputUtils.parseIntOrNull(args);
+        if (id == null){
+            System.out.println("Id is not a number");
+            return;
+        }
+
+        Entry entry = vaultService.getEntryById(id);
+        if (entry == null){
+            System.out.println("An Entry with this id was not found");
+            return;
+        }
+        for (String fieldName : vaultService.getEditableFieldNames()){
+            System.out.println("Current " + fieldName + ":" + vaultService.getField(entry, fieldName));
+            System.out.println("Enter a new " + fieldName + " (or press Enter to keep)");
+            String newValue = scanner.nextLine();
+            if (!newValue.equals("")){
+                vaultService.updateField(entry, fieldName, newValue);
+            }
+        }
+        System.out.println("The Entry has been updated");
     }
 }
