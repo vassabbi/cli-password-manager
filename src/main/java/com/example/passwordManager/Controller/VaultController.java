@@ -1,5 +1,6 @@
 package com.example.passwordManager.Controller;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Scanner;
 
@@ -66,11 +67,11 @@ public class VaultController {
                 case "search" -> searchByKeyword(args);
                 case "remove" -> removeById(args);
                 case "update" -> updateById(args);
+                case "backup" -> makeBackup();
+                case "restore" -> restore();
                 case "exit" -> {
-                    try (scanner) {
-                        saveEntries();
-                        running = false;
-                    }
+                    vaultService.saveVault();
+                    running = false;
                     System.out.println("Exiting Password Manager CLI. Goodbye!");
                 }
 
@@ -95,6 +96,7 @@ public class VaultController {
         } else {
             System.out.println("Duplicated service name and username");
         }
+        vaultService.saveVault();
     }
 
     private void viewAllEntries() {
@@ -127,10 +129,6 @@ public class VaultController {
         printEntries(entries);
     }
 
-    private void saveEntries() {
-        vaultService.saveVault();
-    }
-
     private void removeById(String args){
         args = args.trim();
         Integer id = InputUtils.parseIntOrNull(args);
@@ -142,6 +140,7 @@ public class VaultController {
         if (!vaultService.removeEntryById(id)){
             System.out.println("An Entry with this id was not found");
         } else {
+            vaultService.saveVault();
             System.out.println("An entry was removed");
         }
     }
@@ -167,6 +166,48 @@ public class VaultController {
                 vaultService.updateField(entry, fieldName, newValue);
             }
         }
+        vaultService.saveVault();
         System.out.println("The Entry has been updated");
+    }
+
+    private void makeBackup(){
+        if (vaultService.backup()){
+            System.out.println("Backup was created");
+        } else {
+            System.out.println("Failed to create backup");
+        }
+    }
+
+    private void restore(){
+        List<Path> backups = vaultService.getBackups();
+        System.out.println("Choose backup");
+        for (int i = 0; i < backups.size(); i++){
+            System.out.printf("%-4s %-40s%n", (i + 1), backups.get(i).getFileName().toString());
+        }
+        System.out.printf("%-4s %-40s%n", 0, "back");
+        String strPos = scanner.nextLine();
+        Integer id = InputUtils.parseIntOrNull(strPos);
+
+        if (id == null){
+            System.out.println("Id is not a number");
+            return;
+        }
+
+        if (id == 0){
+            return;
+        }
+
+        if (id < 1 || id > backups.size()){
+            System.out.println("Id is out of range");
+            return;
+        }
+
+        id--;
+        Path neededBackup = backups.get(id);
+        if (!vaultService.restore(neededBackup)){
+            System.out.println("Backup restore error");
+        } else {
+            System.out.println("The backup restore was successful");
+        }
     }
 }

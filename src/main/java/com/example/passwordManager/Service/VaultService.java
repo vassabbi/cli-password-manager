@@ -1,5 +1,7 @@
 package com.example.passwordManager.Service;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,5 +135,27 @@ public class VaultService {
     public boolean removeEntryById(int id) {
         return vault.getEntries()
                 .removeIf(en -> en.getId() == id);
+    }
+
+    public boolean backup(){
+        return repo.backup(userName);
+    }
+
+    public List<Path> getBackups(){
+        List<Path> backups = repo.getBackups(userName);
+        List<Path> backupsFiltered = new ArrayList<>();
+        for (Path backup: backups){
+            String fileName = backup.getFileName().toString();
+            if (fileName.startsWith(userName + "_") && fileName.endsWith(".vault.bak")){
+                backupsFiltered.add(backup);
+            }
+        }
+        return backupsFiltered;
+    }
+
+    public boolean restore(Path backupPath){
+        boolean restoring = repo.restore(userName, backupPath);
+        loadVault();
+        return restoring;
     }
 }
