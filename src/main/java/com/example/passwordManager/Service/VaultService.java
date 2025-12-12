@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 
 public class VaultService {
 
-    private VaultRepository repo = new VaultRepository();
+    private final VaultRepository repo = new VaultRepository();
     private Vault vault;
     private final String userName = "Sasha";
     Gson gson = new Gson();
@@ -69,11 +69,27 @@ public class VaultService {
         return vault.getEntries();
     }
 
-    public Entry getEntryById(int id){
+    public Entry getEntryById(int id) {
         return vault.getEntries()
-                    .stream()
-                    .filter(en -> en.getId() == id)
-                    .findFirst()
-                    .orElse(null);
+                .stream()
+                .filter(en -> en.getId() == id)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<Entry> getEntriesByKeyword(String keyword) {
+        String lowerKeyword = keyword.toLowerCase();
+        return vault.getEntries()
+                .stream()
+                .filter(en
+                        -> en.getServiceName().toLowerCase().contains(lowerKeyword)
+                || en.getUrl().toLowerCase().contains(lowerKeyword)
+                || en.getUsername().toLowerCase().contains(lowerKeyword)
+                || en.getNotes().toLowerCase().contains(lowerKeyword)).toList();
+    }
+
+    public boolean removeEntryById(int id) {
+        return vault.getEntries()
+                .removeIf(en -> en.getId() == id);
     }
 }

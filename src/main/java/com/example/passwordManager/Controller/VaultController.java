@@ -9,12 +9,34 @@ import com.example.passwordManager.Utils.InputUtils;
 
 public class VaultController {
 
-    private String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
+    private final String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
     private final Scanner scanner = new Scanner(System.in);
     private final VaultService vaultService = new VaultService();
 
     public VaultController() {
         
+    }
+
+    private void printEntries(List<Entry> entries){
+        if (entries.isEmpty()){
+            System.out.println("The list of entries is empty");
+            return;
+        }
+        System.out.printf(formatString, "ID", "Service name", "Login", "Password", "URL", "Notes");
+        for (var en : entries){
+            printEntry(en);
+        }
+    }
+
+    private void printEntry(Entry entry){
+        System.out.printf(formatString,
+            entry.getId(),
+            entry.getServiceName(),
+            entry.getUsername(),
+            entry.getPassword(),
+            entry.getUrl(),
+            entry.getNotes()
+        );
     }
 
     public void startCLICycle() {
@@ -39,8 +61,10 @@ public class VaultController {
             String args = parts.length > 1 ? parts[1] : "";
             switch (command) {
                 case "add" -> addEntry();
-                case "list" -> viewEntries();
+                case "list" -> viewAllEntries();
                 case "show" -> viewEntryById(args);
+                case "search" -> searchByKeyword(args);
+                case "remove" -> removeById(args);
                 case "exit" -> {
                     saveEntries();
                     running = false;
@@ -67,22 +91,11 @@ public class VaultController {
         } else {
             System.out.println("Duplicated service name and username");
         }
-        // Implementation for adding an entry
     }
 
-    private void viewEntries() {
-        List<Entry> entries= vaultService.getAllEntries();
-        System.out.printf(formatString, "ID", "Service name", "Login", "Password", "URL", "Notes");
-        for (var en : entries){
-            System.out.printf(formatString,
-                en.getId(),
-                en.getServiceName(),
-                en.getUsername(),
-                en.getPassword(),
-                en.getUrl(),
-                en.getNotes()
-            );
-        }
+    private void viewAllEntries() {
+        List<Entry> entries = vaultService.getAllEntries();
+        printEntries(entries);
     }
 
     private void viewEntryById(String args) {
@@ -95,18 +108,38 @@ public class VaultController {
         if (entry == null){
             System.out.println("An Entry with this id was not found");
         } else {
-            System.out.printf(formatString,
-                entry.getId(),
-                entry.getServiceName(),
-                entry.getUsername(),
-                entry.getPassword(),
-                entry.getUrl(),
-                entry.getNotes()
-            );
+            printEntry(entry);
         }
+    }
+
+    private void searchByKeyword(String args) {
+        if (args == null){
+            System.out.println("The keyword was not found");
+            return;
+        }
+        if (args.length() < 2){
+            System.out.println("Keyword must be at least 2 characters");
+            return;
+        }
+        List<Entry> entries = vaultService.getEntriesByKeyword(args);
+        printEntries(entries);
     }
 
     private void saveEntries() {
         vaultService.saveVault();
+    }
+
+    private void removeById(String args){
+        Integer id = InputUtils.parseIntOrNull(args);
+        if (id == null){
+            System.out.println("Id is not a number");
+            return;
+        }
+
+        if (!vaultService.removeEntryById(id)){
+            System.out.println("An Entry with this id was not found");
+        } else {
+            System.out.println("An entry was removed");
+        }
     }
 }
