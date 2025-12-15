@@ -5,8 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class VaultRepository {
@@ -24,8 +22,8 @@ public class VaultRepository {
         }
     }
     
-    public byte[] load(String userName){
-        Path filePath = dataDir.resolve(userName + ".vault");
+    public byte[] load(String username){
+        Path filePath = dataDir.resolve(username + ".vault");
         try{
             byte[] data = Files.readAllBytes(filePath);
             return data;
@@ -34,8 +32,8 @@ public class VaultRepository {
         }   
     }
 
-    public boolean save(String userName, byte[] data){
-        Path filePath = dataDir.resolve(userName + ".vault");
+    public boolean save(String username, byte[] data){
+        Path filePath = dataDir.resolve(username + ".vault");
         try{
             Files.write(filePath, data);
             return true;
@@ -45,20 +43,20 @@ public class VaultRepository {
         }
     }
 
-    public boolean backup(String userName){
-        String timestamp = LocalDateTime.now()
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-        Path originalPath = dataDir.resolve(userName + ".vault");
-        Path backupPath = dataDir.resolve(userName + "_" + timestamp + ".vault.bak");
+    public boolean copy(Path source, Path target, boolean overwrite){
         try {
-            Files.copy(originalPath, backupPath);
+            if (overwrite){
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.copy(source, target);
+            }
             return true;
         } catch (IOException e) {
             return false;
         }
     }
 
-    public List<Path> getBackups(String username){
+    public List<Path> listFiles(){
         try {
             return Files.list(dataDir)
                 .filter(Files::isRegularFile)
@@ -68,13 +66,11 @@ public class VaultRepository {
         }
     }
 
-    public boolean restore(String userName, Path backupPath){
-        Path originalPath = dataDir.resolve(userName + ".vault");
-        try {
-            Files.copy(backupPath, originalPath, StandardCopyOption.REPLACE_EXISTING);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+    public Path getVaultPath(String username){
+        return dataDir.resolve(username + ".vault");
+    }
+
+    public Path createBackupPath(String username, String timestamp){
+        return dataDir.resolve(username + "_" + timestamp + ".vault.bak");
     }
 }
