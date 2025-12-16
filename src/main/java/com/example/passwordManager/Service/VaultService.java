@@ -35,15 +35,21 @@ public class VaultService {
             }
             repo.save(userName, data);
         } catch (GeneralSecurityException ex){
+            throw new RuntimeException("Failed to decrypt vault", ex);
         }
     }
 
     public final boolean loadVault() {
         byte[] data;
         try {
-            data = CryptoService.decrypt(repo.load(userName), masterPassword);
+            byte[] encrypted = repo.load(userName);
+            if (encrypted == null){
+                vault = new Vault();
+                return false;
+            }
+            data = CryptoService.decrypt(encrypted, masterPassword);
         } catch (GeneralSecurityException ex){
-            data = null;
+            throw new RuntimeException("Failed to decrypt vault", ex);
         }
 
         if (data != null) {
