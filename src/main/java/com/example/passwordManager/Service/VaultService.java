@@ -1,5 +1,7 @@
 package com.example.passwordManager.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.List;
 
 import com.example.passwordManager.Model.Entry;
@@ -12,6 +14,7 @@ public class VaultService {
     private final VaultRepository repo;
     private Vault vault;
     private final String userName;
+    private final String masterPassword = "123qwe321";
     Gson gson = new Gson();
 
     public VaultService(VaultRepository repo, String username) {
@@ -22,12 +25,27 @@ public class VaultService {
 
     public void saveVault() {
         String jsonVault = gson.toJson(vault);
-        byte[] data = jsonVault.getBytes();
-        repo.save(userName, data);
+        try{
+            byte [] encrypted = jsonVault.getBytes(StandardCharsets.UTF_8);
+            byte[] data;
+            if (encrypted != null){
+                data = CryptoService.encrypt(encrypted, masterPassword);
+            } else {
+                data = null;
+            }
+            repo.save(userName, data);
+        } catch (GeneralSecurityException ex){
+        }
     }
 
     public final boolean loadVault() {
-        byte[] data = repo.load(userName);
+        byte[] data;
+        try {
+            data = CryptoService.decrypt(repo.load(userName), masterPassword);
+        } catch (GeneralSecurityException ex){
+            data = null;
+        }
+
         if (data != null) {
             String jsonVault = new String(data);
             this.vault = gson.fromJson(jsonVault, Vault.class);
