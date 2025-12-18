@@ -19,8 +19,7 @@ public class CryptoService {
     private static final int TAG_LENGTH = 128;
     private static final int KEY_LENGTH = 256;
 
-    public static byte[] encrypt(byte[] data, String password) throws GeneralSecurityException {
-        char[] passwordChars = password.toCharArray();
+    public static byte[] encrypt(byte[] data, char[] password) throws GeneralSecurityException {
 
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[SALT_LENGTH];
@@ -30,7 +29,7 @@ public class CryptoService {
         random.nextBytes(iv);
 
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        PBEKeySpec spec = new PBEKeySpec(passwordChars, salt, ITERATIONS, KEY_LENGTH);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_LENGTH);
         SecretKey secretKey = factory.generateSecret(spec);
         SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
 
@@ -46,8 +45,7 @@ public class CryptoService {
         return buffer.array();
     }
 
-    public static byte[] decrypt(byte[] data, String password) throws GeneralSecurityException {
-        char[] passwordChars = password.toCharArray();
+    public static byte[] decrypt(byte[] data, char[] password) throws GeneralSecurityException {
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
         byte[] salt = new byte[SALT_LENGTH];
@@ -60,7 +58,7 @@ public class CryptoService {
         buffer.get(cipherText);
 
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        PBEKeySpec spec = new PBEKeySpec(passwordChars, salt, ITERATIONS, KEY_LENGTH);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_LENGTH);
         SecretKey secretKey = factory.generateSecret(spec);
         SecretKeySpec key = new SecretKeySpec(secretKey.getEncoded(), "AES");
 

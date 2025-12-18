@@ -1,67 +1,51 @@
 package com.example.passwordManager.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
 import com.example.passwordManager.Model.Entry;
 import com.example.passwordManager.Model.Vault;
 import com.example.passwordManager.Repository.VaultRepository;
-import com.google.gson.Gson;
 
 public class VaultService {
 
     private final VaultRepository repo;
+    private final VaultCodec codec;
     private Vault vault;
-    private final String userName;
-    private final String masterPassword = "123qwe321";
-    Gson gson = new Gson();
+    private final String username;
+    private final char[] password;
 
-    public VaultService(VaultRepository repo, String username) {
+    public VaultService(VaultRepository repo, VaultCodec codec, String username, char[] password) {
         this.repo = repo;
-        this.userName = username;
-        this.loadVault();
+        this.codec = codec;
+        this.username = username;
+        this.password = password;
     }
 
     public void saveVault() {
-        String jsonVault = gson.toJson(vault);
-        try{
-            byte [] encrypted = jsonVault.getBytes(StandardCharsets.UTF_8);
-            byte[] data;
-            if (encrypted != null){
-                data = CryptoService.encrypt(encrypted, masterPassword);
-            } else {
-                data = null;
-            }
-            repo.save(userName, data);
-        } catch (GeneralSecurityException ex){
-            throw new RuntimeException("Failed to decrypt vault", ex);
+        try {
+            byte[] encrypted = codec.encode(vault, password);
+            repo.save(username, encrypted);
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Failed to save vault", e);
         }
     }
 
     public final boolean loadVault() {
-        byte[] data;
-        try {
-            byte[] encrypted = repo.load(userName);
-            if (encrypted == null){
-                vault = new Vault();
-                return false;
-            }
-            data = CryptoService.decrypt(encrypted, masterPassword);
-        } catch (GeneralSecurityException ex){
-            throw new RuntimeException("Failed to decrypt vault", ex);
-        }
-
-        if (data != null) {
-            String jsonVault = new String(data);
-            this.vault = gson.fromJson(jsonVault, Vault.class);
-            if (this.vault == null) {
-                this.vault = new Vault();
-            }
-            return true;
-        } else {
+        byte[] encrypted = repo.load(username);
+        if (encrypted == null) {
             vault = new Vault();
             return false;
+        }
+
+        try {
+            vault = codec.decode(encrypted, password);
+            return true;
+        } catch (GeneralSecurityException e) {
+            vault = null;
+            //throw new RuntimeException("Vault corrupted or wrong password", e);
+            return false;
+            
         }
     }
 
