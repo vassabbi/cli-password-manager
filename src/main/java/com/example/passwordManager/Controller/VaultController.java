@@ -11,13 +11,15 @@ import com.example.passwordManager.Utils.InputUtils;
 public class VaultController {
 
     private final String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
-    private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner;
     private final VaultApplicationService vaultApplicationService;
 
     public VaultController(
-        VaultApplicationService vaultApplicationService
+        VaultApplicationService vaultApplicationService,
+        Scanner scanner
     ) {
         this.vaultApplicationService = vaultApplicationService;
+        this.scanner = scanner;
     }
 
     private void printEntries(List<Entry> entries) {
@@ -86,7 +88,7 @@ public class VaultController {
                 }
 
                 default ->
-                    System.out.println("Invalid option. Please try again.");
+                    System.out.println("Invalid option. Please try again");
             }
         }
     }
