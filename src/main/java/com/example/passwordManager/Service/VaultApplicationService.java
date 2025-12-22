@@ -69,16 +69,16 @@ public class VaultApplicationService {
         return vaultService.getEntriesByKeyword(keyword);
     }
 
-    public boolean createBackup(){
-        return backupService.backup();
+    public boolean createBackup(String userName){
+        return backupService.backup(userName);
     }
 
-    public List<Path> getAvailableBackups(){
-        return backupService.getBackups();
+    public List<Path> getAvailableBackups(String userName){
+        return backupService.getBackups(userName);
     }
 
-    public boolean restoreFromBackup(Path backupPath){
-        boolean restored = backupService.restore(backupPath);
+    public boolean restoreFromBackup(String userName, Path backupPath){
+        boolean restored = backupService.restore(userName, backupPath);
         if (restored){
             vaultService.loadVault();
         }

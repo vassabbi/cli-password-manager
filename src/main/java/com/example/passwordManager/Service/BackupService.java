@@ -11,14 +11,12 @@ import com.example.passwordManager.Repository.VaultRepository;
 public class BackupService {
 
     private final VaultRepository repo;
-    private final String userName;
 
-    public BackupService(VaultRepository repo, String username) {
+    public BackupService(VaultRepository repo) {
         this.repo = repo;
-        this.userName = username;
     }
 
-    public boolean backup(){
+    public boolean backup(String userName){
         String timestamp = LocalDateTime.now()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
         Path originalPath = repo.getVaultPath(userName);
@@ -26,7 +24,7 @@ public class BackupService {
         return repo.copy(originalPath, backupPath, false);
     }
 
-    public List<Path> getBackups(){
+    public List<Path> getBackups(String userName){
         List<Path> backups = repo.listFiles();
         if (backups == null){
             return null;
@@ -41,8 +39,12 @@ public class BackupService {
         return backupsFiltered;
     }
 
-    public boolean restore(Path backupPath){
+    public boolean restore(String userName, Path backupPath){
         Path originalPath = repo.getVaultPath(userName);
         return repo.copy(backupPath, originalPath, true);
+    }
+
+    public byte[] loadBackup(Path path){
+        return repo.load(path);
     }
 }

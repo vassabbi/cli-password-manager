@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import com.example.passwordManager.Model.Entry;
 import com.example.passwordManager.Service.VaultApplicationService;
+import com.example.passwordManager.Utils.BackupUtils;
 import com.example.passwordManager.Utils.InputUtils;
 
 public class VaultController {
@@ -13,13 +14,16 @@ public class VaultController {
     private final String formatString = "%-9s %-15s %-15s %-15s %-25s %-40s%n";
     private final Scanner scanner;
     private final VaultApplicationService vaultApplicationService;
+    private final String userName;
 
     public VaultController(
         VaultApplicationService vaultApplicationService,
-        Scanner scanner
+        Scanner scanner,
+        String userName
     ) {
         this.vaultApplicationService = vaultApplicationService;
         this.scanner = scanner;
+        this.userName = userName;
     }
 
     private void printEntries(List<Entry> entries) {
@@ -181,7 +185,7 @@ public class VaultController {
     }
 
     private void makeBackup() {
-        if (vaultApplicationService.createBackup()) {
+        if (vaultApplicationService.createBackup(userName)) {
             System.out.println("Backup was created");
         } else {
             System.out.println("Failed to create backup");
@@ -189,36 +193,9 @@ public class VaultController {
     }
 
     private void restore() {
-        List<Path> backups = vaultApplicationService.getAvailableBackups();
-        if (backups == null){
-            System.out.println("There are no backups");
-            return;
-        }
-        System.out.println("Choose backup");
-        for (int i = 0; i < backups.size(); i++) {
-            System.out.printf("%-4s %-40s%n", (i + 1), backups.get(i).getFileName().toString());
-        }
-        System.out.printf("%-4s %-40s%n", 0, "back");
-        String strPos = scanner.nextLine();
-        Integer id = InputUtils.parseIntOrNull(strPos);
-
-        if (id == null) {
-            System.out.println("Id is not a number");
-            return;
-        }
-
-        if (id == 0) {
-            return;
-        }
-
-        if (id < 1 || id > backups.size()) {
-            System.out.println("Id is out of range");
-            return;
-        }
-
-        id--;
-        Path neededBackup = backups.get(id);
-        if (vaultApplicationService.restoreFromBackup(neededBackup)) {
+        Path neededBackup = BackupUtils.chooseBackup(scanner, vaultApplicationService.getAvailableBackups(userName));
+        if (neededBackup == null) return;
+        if (vaultApplicationService.restoreFromBackup(userName, neededBackup)) {
             System.out.println("The backup restore was successful");
         } else {
             System.out.println("Backup restore error");

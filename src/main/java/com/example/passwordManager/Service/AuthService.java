@@ -2,6 +2,7 @@ package com.example.passwordManager.Service;
 
 import java.security.GeneralSecurityException;
 
+import com.example.passwordManager.Model.AuthResult;
 import com.example.passwordManager.Model.Vault;
 import com.example.passwordManager.Repository.VaultRepository;
 
@@ -14,16 +15,16 @@ public class AuthService {
         this.codec = codec;
     }
     
-    public boolean login(String username, char[] password){
+    public AuthResult login(String username, char[] password){
         byte[] encrypted = repo.load(username);
         if (encrypted == null) {
-            return false;
+            return AuthResult.VAULT_NOT_FOUND;
         }
         try {
             codec.decode(encrypted, password);
-            return true;
+            return AuthResult.SUCCESS;
         } catch (GeneralSecurityException e) {
-            return false;
+            return AuthResult.INVALID_PASSWORD_OR_CORRUPTED;
         }
     }
 

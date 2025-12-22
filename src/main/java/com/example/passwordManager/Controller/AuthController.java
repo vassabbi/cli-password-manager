@@ -1,17 +1,28 @@
 package com.example.passwordManager.Controller;
 
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.util.List;
 import java.util.Scanner;
 
+import com.example.passwordManager.Model.AuthResult;
 import com.example.passwordManager.Model.UserSession;
 import com.example.passwordManager.Service.AuthService;
+import com.example.passwordManager.Service.BackupService;
+import com.example.passwordManager.Service.VaultCodec;
+import com.example.passwordManager.Utils.BackupUtils;
 
 public class AuthController {
     private final AuthService authService;
     private final Scanner scanner;
+    private final BackupService backupService;
+    private final VaultCodec codec;
 
-    public AuthController(AuthService authService, Scanner scanner){
+    public AuthController(AuthService authService, Scanner scanner, BackupService backupService, VaultCodec codec){
         this.authService = authService;
         this.scanner = scanner;
+        this.backupService = backupService;
+        this.codec = codec;
     }
 
     public UserSession login(){
@@ -21,11 +32,20 @@ public class AuthController {
         System.out.print("Password: ");
         char[] password = scanner.nextLine().toCharArray();
 
-
-        if (authService.login(username, password)) {
+        AuthResult result = authService.login(username, password);
+        
+        if (result == AuthResult.SUCCESS) {
             return new UserSession(username, password);
         } else {
-            System.out.println("Invalid username or password!");
+
+            if (result == AuthResult.VAULT_NOT_FOUND) {
+                System.out.println("Vault is not found");
+            } else if (result == AuthResult.INVALID_PASSWORD_OR_CORRUPTED){
+                System.out.println("Invalid password or vault is corrupted");
+            }
+            if (restoreFromBackup(username, password)){
+                return new UserSession(username, password);
+            }
             return null;
         }
     }
@@ -63,5 +83,34 @@ public class AuthController {
             }
         }
     }
-    
+
+    private boolean restoreFromBackup(String username, char[] password) {
+        List<Path> backups = backupService.getBackups(username);
+        if (backups.isEmpty()) {
+            System.out.println("No backups found");
+            return false;
+        }
+        System.out.println("Do you want to restore from a backup? (y/n)");
+        String choice = scanner.nextLine().trim();
+        if (!choice.equalsIgnoreCase("y")) return false;
+        Path neededBackup = BackupUtils.chooseBackup(scanner, backups);
+        if (neededBackup == null) return false;
+
+        try {
+            byte[] data = backupService.loadBackup(neededBackup);
+            codec.decode(data, password);  // Если не удалось — выбросит исключение
+        } catch (GeneralSecurityException e) {
+            System.out.println("Cannot restore backup: incorrect password or corrupted file");
+            return false;
+        }
+        if (backupService.restore(username, neededBackup)){
+            System.out.println("The backup restore was successful");
+            return true;
+        } else {
+            System.out.println("Backup restore error");
+            return false;
+        }
+    }
 }
+
+

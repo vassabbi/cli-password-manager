@@ -32,6 +32,15 @@ public class VaultRepository {
         }   
     }
 
+    public byte[] load(Path path){
+        try{
+            byte[] data = Files.readAllBytes(path);
+            return data;
+        } catch (IOException e){
+            return null;
+        }   
+    }
+
     public boolean save(String username, byte[] data){
         Path filePath = dataDir.resolve(username + ".vault");
         try{

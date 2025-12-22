@@ -20,6 +20,7 @@ public class ApplicationRunner {
     private final VaultRepository vaultRepository = new VaultRepository();
     private final VaultCodec vaultCodec = new VaultCodec();
     private final EntryMetadata entryMetadata = new EntryMetadata();
+    BackupService backupService = new BackupService(vaultRepository);
 
     public void run() {
         while (true) {
@@ -38,7 +39,7 @@ public class ApplicationRunner {
 
     private UserSession authenticate() {
         AuthService authService = new AuthService(vaultRepository, vaultCodec);
-        AuthController authController = new AuthController(authService, scanner);
+        AuthController authController = new AuthController(authService, scanner, backupService, vaultCodec);
 
         return authController.authFlow();
     }
@@ -51,14 +52,10 @@ public class ApplicationRunner {
                 session.getPassword()
         );
         vaultService.loadVault();
-        BackupService backupService = new BackupService(
-                vaultRepository,
-                session.getUsername()
-        );
         VaultApplicationService appService = 
                 new VaultApplicationService(vaultService, backupService, entryMetadata);
         VaultController controller = 
-                new VaultController(appService, scanner);
+                new VaultController(appService, scanner, session.getUsername());
         controller.startCLICycle();
         vaultService.saveVault();
     }
