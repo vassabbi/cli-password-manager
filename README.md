@@ -63,3 +63,14 @@
 - Repository — работа с файловой системой
 - ApplicationService — оркестрация use-case'ов
 - EntryMetadata — метаданные редактируемых полей
+
+## Запуск проекта
+
+- Сборка:
+
+  bash
+  mvn clean package
+  
+- Запуск:
+    bash
+    java -jar target/cli-password-manager-1.0-SNAPSHOT.jar
